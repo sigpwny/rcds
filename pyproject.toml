@@ -15,21 +15,20 @@ packages = [
 rcds = "rcds.cli:cli"
 
 [tool.poetry.dependencies]
-python = "^3.6"
-pyyaml = "^5.3.1"
-pathspec = "^0.8.1"
-docker = "^4.3.1"
-jsonschema = "^3.2.0"
-dataclasses = { version = ">=0.7,<0.9", python = "~3.6" }
+python = "^3.11"
+pyyaml = "^6.0.1"
+pathspec = "^0.12.1"
+docker = "^7.0.0"
+jsonschema = "^4.21.0"
 Jinja2 = ">=2.11.2,<4.0.0"
-kubernetes = "^12.0.0"
-requests = "^2.24.0"
-requests-toolbelt = "^0.9.1"
-click = "^7.1.2"
+kubernetes = "^29.0.0"
+requests = "^2.31.0"
+requests-toolbelt = "^1.0.0"
+click = "^8.1.7"
 
 # Docs build dependencies
-sphinx = { version = "^3.3.0", optional = true }
-sphinx_rtd_theme = { version = "^0.5.0", optional = true }
+sphinx = { version = "^7.3.7", optional = true }
+sphinx_rtd_theme = { version = "^2.0.0", optional = true }
 sphinx-jsonschema = { version = "^1.15", optional = true }
 
 [tool.poetry.dev-dependencies]
@@ -41,7 +40,7 @@ mypy = "^0.812"
 flake8 = "^3.9.0"
 flake8-bugbear = "^21.4.3"
 pytest-datadir = "^1.3.1"
-isort = "^5.8.0"
+isort = "^5.13.0"
 
 [tool.poetry.extras]
 docs = ["sphinx", "sphinx_rtd_theme", "sphinx-jsonschema"]
@@ -50,5 +49,5 @@ docs = ["sphinx", "sphinx_rtd_theme", "sphinx-jsonschema"]
 profile = "black"
 
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry-core>=0.12"]
+build-backend = "poetry.core.masonry.api"
