@@ -257,26 +257,15 @@ properties:
             description: >-
               The port number on the container this rule targets.
           tcp:
-            type: integer
+            type: string
             description: >-
-              The external port number to expose, treating this port as raw TCP.
+              The external host FQDN to expose, treating this hostname:1337 as
+              TLS-encrypted TCP with SNI routing.
           http:
+            type: string
             description: >-
-              Configuration to expose this port as HTTP.
-            oneOf:
-            - type: string
-              description: >-
-                The hostname to expose; this is a subdomain name.
-            - type: object
-              properties:
-                raw:
-                  type: string
-                  description: >-
-                    The raw hostname to expose (use when you need the port
-                    to not be on the shared parent domain). Deployment backends
-                    will not handle DNS records for this.
-              oneOf:
-              - required: [raw]
+              The external host FQDN to expose, treating this hostname:443 as
+              HTTPS with Host-based or SNI routing.
         # Exactly one of (http, tcp) allowed
         oneOf:
           - required: [http]

@@ -105,7 +105,8 @@ class ContainerBackend(rcds.backend.BackendContainerRuntime):
 
             render_and_append(container_env, "deployment.yaml")
             render_and_append(container_env, "service.yaml")
-            render_and_append(container_env, "ingress.yaml")
+            render_and_append(container_env, "ingressroute.yaml")
+            render_and_append(container_env, "ingressroutetcp.yaml")
 
         return manifests
 

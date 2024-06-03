@@ -13,7 +13,7 @@ metadata:
     {{ options.annotations.service | yaml(4) }}
   {% endif %}
 spec:
-  type: {{ 'NodePort' if container.expose is not none and container.expose|selectattr("tcp", "defined")|first is defined else 'ClusterIP' }}
+  type: ClusterIP
   selector:
     {{ helpers.common_labels() | indent(4) }}
     {{ helpers.container_labels() | indent(4) }}
@@ -22,9 +22,5 @@ spec:
     - port: {{ port }}
       targetPort: {{ port }}
       name: port-{{ port }}
-    {% set exposedPort = container.expose|selectattr("target", "eq", port)|first %}
-    {% if exposedPort and exposedPort.tcp %}
-      nodePort: {{ exposedPort.tcp }}
-    {% endif %}
   {% endfor %}
 {% endif %}

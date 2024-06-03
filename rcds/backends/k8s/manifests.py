@@ -7,16 +7,29 @@ AnyManifest = Dict[str, Any]
 
 
 # namespaced manifests only - namespaces are handled separately
-MANIFEST_KINDS = ["Deployment", "Service", "Ingress", "NetworkPolicy"]
 KIND_TO_API_VERISON = {
     "Deployment": "apps/v1",
     "Service": "v1",
-    "Ingress": "networking.k8s.io/v1",
     "NetworkPolicy": "networking.k8s.io/v1",
+    "IngressRoute": "traefik.io/v1alpha1",
+    "IngressRouteTCP": "traefik.io/v1alpha1",
+}
+MANIFEST_KINDS = list(KIND_TO_API_VERISON.keys())
+
+# CRDs only
+KIND_TO_PLURAL = {
+    "IngressRoute": "ingressroutes",
+    "IngressRouteTCP": "ingressroutetcps",
 }
 
-
 camel_case_to_snake_case_re = re.compile(r"(?=[A-Z])")
+
+
+class CustomObjectsList:
+    __slots__ = "items",
+
+    def __init__(self, items):
+        self.items = items
 
 
 def kind_to_api_method_postfix(kind: str) -> str:
@@ -24,6 +37,23 @@ def kind_to_api_method_postfix(kind: str) -> str:
 
 
 def get_api_method_for_kind(api_client: Any, method: str, kind: str) -> Callable:
+    if isinstance(api_client, client.CustomObjectsApi):
+        group, version = KIND_TO_API_VERISON[kind].split("/")
+        plural = KIND_TO_PLURAL[kind]
+        return {
+            "create": lambda namespace, body, **kwargs:
+                api_client.create_namespaced_custom_object(
+                    group, version, namespace, plural, body, **kwargs),
+            "delete": lambda name, namespace, body, **kwargs:
+                api_client.delete_namespaced_custom_object(
+                    group, version, namespace, plural, name, **kwargs),
+            "list": lambda namespace, **kwargs:
+                CustomObjectsList(api_client.list_namespaced_custom_object(
+                    group, version, namespace, plural, **kwargs)["items"]),
+            "patch": lambda name, namespace, body, **kwargs:
+                api_client.patch_namespaced_custom_object(
+                    group, version, namespace, plural, name, body, **kwargs),
+        }[method]
     return getattr(api_client, method + kind_to_api_method_postfix(kind))
 
 
@@ -38,11 +68,13 @@ def sync_manifests(all_manifests: Iterable[Dict[str, Any]]):
     v1 = client.CoreV1Api()
     appsv1 = client.AppsV1Api()
     networkingv1 = client.NetworkingV1Api()
+    customobjects = client.CustomObjectsApi()
 
     api_version_to_client = {
         "v1": v1,
         "apps/v1": appsv1,
         "networking.k8s.io/v1": networkingv1,
+        "traefik.io/v1alpha1": customobjects,
     }
 
     manifests_by_namespace_kind: Dict[str, Dict[str, List[Dict[str, Any]]]] = dict()
@@ -60,7 +92,7 @@ def sync_manifests(all_manifests: Iterable[Dict[str, Any]]):
 
     server_namespaces_names: Set[str] = set(
         map(
-            lambda ns: ns.metadata.name,
+            lambda ns: ns["metadata"]["name"] if isinstance(ns, dict) else ns.metadata.name,
             v1.list_namespace(label_selector="app.kubernetes.io/managed-by=rcds").items,
         )
     )
@@ -88,7 +120,7 @@ def sync_manifests(all_manifests: Iterable[Dict[str, Any]]):
             manifests = manifests_by_namespace_kind[namespace].get(kind, [])
             server_manifest_names: Set[str] = set(
                 map(
-                    lambda m: m.metadata.name,
+                    lambda m: m["metadata"]["name"] if isinstance(m, dict) else m.metadata.name,
                     get_api_method_for_kind(
                         api_version_to_client[KIND_TO_API_VERISON[kind]], "list", kind
                     )(

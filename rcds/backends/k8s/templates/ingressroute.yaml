@@ -2,28 +2,29 @@
 {% if container.expose %}
 {% set httpPorts = container.expose|selectattr("http", "defined")|list %}
 {% if httpPorts | first is defined %}
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
 metadata:
   namespace: {{ namespace }}
   name: {{ container.name }}
   labels:
     {{ helpers.common_labels() | indent(4) }}
     {{ helpers.container_labels() | indent(4) }}
-  {% if options.annotations and options.annotations.ingress %}
+  {% if options.annotations and options.annotations.ingressroute %}
   annotations:
-    {{ options.annotations.ingress | yaml(4) }}
+    {{ options.annotations.ingressroute | yaml(4) }}
   {% endif %}
 spec:
-  rules:
+  entryPoints:
+    - https
+  routes:
   {% for httpPort in httpPorts %}
-    - host: {{ httpPort.http }}
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: {{ container.name }}
-              servicePort: {{ httpPort.target }}
+    - match: Host(`{{ httpPort.http }}`)
+      kind: Rule
+      services:
+        - name: {{ container.name }}
+          port: {{ httpPort.target }}
   {% endfor %}
+  tls: {}
 {% endif %}
 {% endif %}
