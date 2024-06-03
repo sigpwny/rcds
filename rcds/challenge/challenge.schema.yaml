@@ -220,6 +220,20 @@ properties:
                   description: >-
                     Memory usage requests for this container.
                   $ref: "#/definitions/memory-value"
+        readOnlyRootFilesystem:
+          type: boolean
+          description: >-
+            Whether or not this challenge have a read-only root filesystem.
+            Filesystem state is not preserved across pod restarts, so it is
+            strongly recommended to set keep this as true.
+          default: true
+        tmpfsMounts:
+          type: array
+          description: >-
+            Paths to tmpfs mount directories. The size limit for each volume is
+            256Mi.
+          items:
+            type: string
       anyOf:
       # Either 'image' or 'build' must be specified
       - required:

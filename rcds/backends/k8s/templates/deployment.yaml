@@ -40,7 +40,28 @@ spec:
           resources:
             {{ container.config.resources | yaml(12) }}
           {% endif %}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: {{ container.config.readOnlyRootFilesystem }}
+          {% if container.config.tmpfsMounts | first is defined %}
+          volumeMounts:
+            {% for tmpfsMount in container.config.tmpfsMounts %}
+            - name: {{ tmpfsMount }}
+              mountPath: {{ tmpfsMount }}
+            {% endfor %}
+          {% endif %}
+      {% if container.config.tmpfsMounts | first is defined %}
+      volumes:
+        {% for tmpfsMount in container.config.tmpfsMounts %}
+        - name: {{ tmpfsMount }}
+          emptyDir:
+            medium: Memory
+            sizeLimit: 256Mi
+        {% endfor %}
+      {% endif %}
       automountServiceAccountToken: false
+      enableServiceLinks: false
       {% if options.tolerations %}
       tolerations:
         {{ options.tolerations | yaml(8) }}
