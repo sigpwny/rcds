@@ -118,41 +118,6 @@ properties:
     additionalProperties:
       type: object
       properties:
-        image:
-          type: string
-          description: >-
-            The image tag for this container. If 'build' is not specified, the
-            container will be pulled (e.g. containers for services like a
-            database found on dockerhub). If 'build' is specified, this
-            overrides the 'name' (default the name of the directory specified in
-            'build') in the image tag template defined globally in the project.
-        build:
-          oneOf:
-          - type: string
-            description: >-
-              Path to the directory containing a Dockerfile to build for this container.
-          - type: object
-            description: >-
-              Complex build configuration object roughly mirroring that of
-              docker-compose.yml.
-            properties:
-              context:
-                type: string
-                description: >-
-                  Path to the build context
-              dockerfile:
-                type: string
-                description: >-
-                  Path to the Dockerfile within the build context
-              args:
-                type: object
-                description: >-
-                  Build arguments to be passed to the build. Please write
-                  numbers as strings to avoid ambiguity from number formatting
-                additionalProperties:
-                  type: string
-            required:
-            - context
         replicas:
           type: integer
           description: >-
@@ -160,86 +125,174 @@ properties:
             applications.
           default: 1
           minimum: 1
-        environment:
+        challenge:
           type: object
-          description: >-
-            Environment variables to set within the container. Please format all
-            values as strings. Keys without values are not supported.
-          additionalProperties:
-            type: string
-        ports:
-          type: array
-          description: >-
-            Port numbers (as integers) on this container to expose to other
-            containers within this challenge. If a port is supposed to be
-            exposed to the Internet, make sure it is specified here, and add it
-            to the top level 'expose' key.
-
-            This key exists to ensure Kubernetes services have the correct
-            ports configured on each service. Due to restrictions with Docker
-            Compose / Docker Swarm, remapping ports as can be done with
-            Kubernetes services is not possible.
-          items:
-            type: integer
-        resources:
-          type: object
-          description: >-
-            Compute resource requests and limits for this container. This
-            follows the same format as Kubernetes's resources property on
-            container specs.
-
-            Not all features are supported by all backends (though limits should
-            work on most).
           properties:
-            limits:
+            image:
+              type: string
+              description: >-
+                The image tag for this container. If 'build' is not specified, the
+                container will be pulled (e.g. containers for services like a
+                database found on dockerhub). If 'build' is specified, this
+                overrides the 'name' (default the name of the directory specified in
+                'build') in the image tag template defined globally in the project.
+            build:
+              oneOf:
+              - type: string
+                description: >-
+                  Path to the directory containing a Dockerfile to build for this container.
+              - type: object
+                description: >-
+                  Complex build configuration object roughly mirroring that of
+                  docker-compose.yml.
+                properties:
+                  context:
+                    type: string
+                    description: >-
+                      Path to the build context
+                  dockerfile:
+                    type: string
+                    description: >-
+                      Path to the Dockerfile within the build context
+                  args:
+                    type: object
+                    description: >-
+                      Build arguments to be passed to the build. Please write
+                      numbers as strings to avoid ambiguity from number formatting
+                    additionalProperties:
+                      type: string
+                required:
+                - context
+            environment:
               type: object
               description: >-
-                Compute resource limits for this container. Using more of a
-                resource than the limit is not allowed.
-              properties:
-                cpu:
-                  description: >-
-                    CPU usage limits for this container - 1 unit corresponds to
-                    1 CPU second per (wall-clock) second.
-                  $ref: "#/definitions/cpu-value"
-                memory:
-                  description: >-
-                    Memory usage limits for this container.
-                  $ref: "#/definitions/memory-value"
-            requests:
+                Environment variables to set within the container. Please format all
+                values as strings. Keys without values are not supported.
+              additionalProperties:
+                type: string
+            ports:
+              type: array
+              description: >-
+                Port numbers (as integers) on this container to expose to other
+                containers within this challenge. If a port is supposed to be
+                exposed to the Internet, make sure it is specified here, and add it
+                to the top level 'expose' key.
+
+                This key exists to ensure Kubernetes services have the correct
+                ports configured on each service. Due to restrictions with Docker
+                Compose / Docker Swarm, remapping ports as can be done with
+                Kubernetes services is not possible.
+              items:
+                type: integer
+            resources:
               type: object
               description: >-
-                Compute resource requets for this container.
+                Compute resource requests and limits for this container. This
+                follows the same format as Kubernetes's resources property on
+                container specs.
+
+                Not all features are supported by all backends (though limits should
+                work on most).
               properties:
-                cpu:
+                limits:
+                  type: object
                   description: >-
-                    CPU usage requests for this container - 1 unit corresponds to
-                    1 CPU second per (wall-clock) second.
-                  $ref: "#/definitions/cpu-value"
-                memory:
+                    Compute resource limits for this container. Using more of a
+                    resource than the limit is not allowed.
+                  properties:
+                    cpu:
+                      description: >-
+                        CPU usage limits for this container - 1 unit corresponds to
+                        1 CPU second per (wall-clock) second.
+                      $ref: "#/definitions/cpu-value"
+                    memory:
+                      description: >-
+                        Memory usage limits for this container.
+                      $ref: "#/definitions/memory-value"
+                requests:
+                  type: object
                   description: >-
-                    Memory usage requests for this container.
-                  $ref: "#/definitions/memory-value"
-        readOnlyRootFilesystem:
-          type: boolean
-          description: >-
-            Whether or not this challenge have a read-only root filesystem.
-            Filesystem state is not preserved across pod restarts, so it is
-            strongly recommended to set keep this as true.
-          default: true
-        tmpfsMounts:
-          type: array
-          description: >-
-            Paths to tmpfs mount directories. The size limit for each volume is
-            256Mi.
-          items:
-            type: string
-      anyOf:
-      # Either 'image' or 'build' must be specified
-      - required:
-        - image
-      - required:
-        - build
+                    Compute resource requets for this container.
+                  properties:
+                    cpu:
+                      description: >-
+                        CPU usage requests for this container - 1 unit corresponds to
+                        1 CPU second per (wall-clock) second.
+                      $ref: "#/definitions/cpu-value"
+                    memory:
+                      description: >-
+                        Memory usage requests for this container.
+                      $ref: "#/definitions/memory-value"
+            readOnlyRootFilesystem:
+              type: boolean
+              description: >-
+                Whether or not this challenge have a read-only root filesystem.
+                Filesystem state is not preserved across pod restarts, so it is
+                strongly recommended to set keep this as true.
+              default: true
+            tmpfsMounts:
+              type: array
+              description: >-
+                Paths to tmpfs mount directories. The size limit for each volume is
+                256Mi.
+              items:
+                type: string
+          anyOf:
+          # Either 'image' or 'build' must be specified
+          - required:
+            - image
+          - required:
+            - build
+      patternProperties:
+        ^healthcheck$:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: true
+              description: >-
+                Whether or not the healthcheck should be enabled.
+            image:
+              type: string
+              description: >-
+                The image tag for this container. If 'build' is not specified, the
+                container will be pulled (e.g. containers for services like a
+                database found on dockerhub). If 'build' is specified, this
+                overrides the 'name' (default the name of the directory specified in
+                'build') in the image tag template defined globally in the project.
+            build:
+              oneOf:
+              - type: string
+                description: >-
+                  Path to the directory containing a Dockerfile to build for this container.
+              - type: object
+                description: >-
+                  Complex build configuration object roughly mirroring that of
+                  docker-compose.yml.
+                properties:
+                  context:
+                    type: string
+                    description: >-
+                      Path to the build context
+                  dockerfile:
+                    type: string
+                    description: >-
+                      Path to the Dockerfile within the build context
+                  args:
+                    type: object
+                    description: >-
+                      Build arguments to be passed to the build. Please write
+                      numbers as strings to avoid ambiguity from number formatting
+                    additionalProperties:
+                      type: string
+                required:
+                - context
+          anyOf:
+          # Either 'image' or 'build' must be specified
+          - required:
+            - image
+          - required:
+            - build
     propertyNames:
       $ref: "#/definitions/domainsafe-name"
   expose:

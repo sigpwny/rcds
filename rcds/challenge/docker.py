@@ -80,10 +80,27 @@ def generate_sum(root: Path) -> str:
 
 class Container:
     """
-    A single container
+    A single "container"
+
+    In kubernetes terms, a pod, that may have multiple docker containers.
+    """
+
+    challenge: "SubContainer"
+    healthcheck: "SubContainer"
+    name: str
+    config: Dict[str, Any]
+
+    def __init__(self):
+        self.challenge = self.healthcheck = None
+
+
+class SubContainer:
+    """
+    A single sub container
     """
 
     manager: "ContainerManager"
+    container: "Container"
     challenge: "Challenge"
     project: "Project"
     name: str
@@ -91,12 +108,13 @@ class Container:
 
     IS_BUILDABLE: bool = False
 
-    def __init__(self, *, container_manager: "ContainerManager", name: str) -> None:
+    def __init__(self, *, container_manager: "ContainerManager", container: "Container", name: str) -> None:
         self.manager = container_manager
+        self.container = container
         self.challenge = self.manager.challenge
         self.project = self.challenge.project
         self.name = name
-        self.config = container_manager.config[self.name]
+        self.config = container.config[self.name]
 
     def get_full_tag(self) -> str:
         """
@@ -128,9 +146,9 @@ class Container:
         pass
 
 
-class BuildableContainer(Container):
+class BuildableSubContainer(SubContainer):
     """
-    A container that is built from source
+    A sub container that is built from source
     """
 
     root: Path
@@ -220,6 +238,7 @@ class ContainerManager:
     project: "Project"
     config: Dict[str, Dict[str, Any]]
     containers: Dict[str, Container]
+    subcontainers: Dict[str, SubContainer]
     _auth_config: Dict[str, str]
 
     def __init__(self, challenge: "Challenge"):
@@ -231,6 +250,7 @@ class ContainerManager:
         self.challenge = challenge
         self.project = self.challenge.project
         self.containers = dict()
+        self.subcontainers = dict()
         self.config = cast(
             Dict[str, Dict[str, Any]], self.challenge.config.get("containers", dict())
         )
@@ -239,25 +259,37 @@ class ContainerManager:
 
         for name in self.config.keys():
             container_config = self.config[name]
-            container_constructor: Type[Container]
-            if "build" in container_config:
-                container_constructor = BuildableContainer
-            else:
-                container_constructor = Container
-            self.containers[name] = container_constructor(
-                container_manager=self, name=name
-            )
-            container_config["image"] = self.containers[name].get_full_tag()
+            container = Container()
+            container.name = name
+            container.config = container_config
+            self.containers[name] = container
 
-    def get_docker_image(self, container: Container) -> str:
+            for subcontainer_name in ["challenge", "healthcheck"]:
+                if subcontainer_name not in container_config:
+                    continue
+                subcontainer_config = container_config[subcontainer_name]
+                container_constructor: Type[SubContainer]
+                if "build" in subcontainer_config:
+                    container_constructor = BuildableSubContainer
+                else:
+                    container_constructor = SubContainer
+                subcontainer = container_constructor(
+                    container_manager=self, container=container, name=subcontainer_name
+                )
+                subcontainer_config["image"] = subcontainer.get_full_tag()
+                setattr(container, subcontainer_name, subcontainer)
+                self.subcontainers[f"{name}-{subcontainer_name}"] = subcontainer
+
+    def get_docker_image(self, subcontainer: SubContainer) -> str:
         image_template = self.project.jinja_env.from_string(
             self.project.config["docker"]["image"]["template"]
         )
         template_context = {
             "challenge": self.challenge.config,
-            "container": dict(container.config),
+            "containername": subcontainer.container.name,
+            "subcontainer": dict(subcontainer.config),
         }
-        template_context["container"]["name"] = container.name
+        template_context["subcontainer"]["name"] = subcontainer.name
         image = image_template.render(template_context)
         # FIXME: better implementation than abusing PosixPath?
         return str(

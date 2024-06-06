@@ -24,14 +24,14 @@ def deploy() -> None:
     project.load_all_challenges()
     for challenge in project.challenges.values():
         cm = rcds.challenge.docker.ContainerManager(challenge)
-        for container_name, container in cm.containers.items():
-            click.echo(f"{challenge.config['id']}: checking container {container_name}")
-            if not container.is_built():
+        for subcontainer_name, subcontainer in cm.subcontainers.items():
+            click.echo(f"{challenge.config['id']}: checking container {subcontainer_name}")
+            if not subcontainer.is_built():
                 click.echo(
-                    f"{challenge.config['id']}: building container {container_name}"
-                    f" ({container.get_full_tag()})"
+                    f"{challenge.config['id']}: building container {subcontainer_name}"
+                    f" ({subcontainer.get_full_tag()})"
                 )
-                container.build()
+                subcontainer.build()
         challenge.create_transaction().commit()
     if project.container_backend is not None:
         click.echo("Commiting container backend")
