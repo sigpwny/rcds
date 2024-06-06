@@ -20,7 +20,7 @@ spec:
         {{ helpers.container_labels() | indent(8) }}
     spec:
       containers:
-        - name: {{ container.name }}
+        - name: container
           image: {{ container.config.image }}
           {% if container.config.ports %}
           ports:
@@ -51,7 +51,34 @@ spec:
               mountPath: {{ tmpfsMount }}
             {% endfor %}
           {% endif %}
-      {% if container.config.tmpfsMounts | first is defined %}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 45281
+            initialDelaySeconds: 45
+            timeoutSeconds: 3
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 45281
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+            periodSeconds: 5
+        {% if container.healthcheck %}
+        - name: healthcheck
+          image: gcr.io/kctf-docker/healthcheck
+          resources:
+            limits:
+              cpu: 1000m
+            requests:
+              cpu: 50m
+          volumeMounts:
+            - name: pow-bypass
+              mountPath: /pow-bypass
+              readOnly: true
+        {% endif %}
+      {% if container.config.tmpfsMounts | first is defined | container.healthcheck %}
       volumes:
         {% for tmpfsMount in container.config.tmpfsMounts %}
         - name: {{ tmpfsMount }}
@@ -59,6 +86,11 @@ spec:
             medium: Memory
             sizeLimit: 256Mi
         {% endfor %}
+        {% if container.healthcheck %}
+        - name: pow-bypass
+          secret:
+            secretName: pow-bypass
+        {% endif %}
       {% endif %}
       automountServiceAccountToken: false
       enableServiceLinks: false
