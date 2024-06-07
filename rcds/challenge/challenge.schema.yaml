@@ -115,6 +115,12 @@ properties:
       Containers to be deployed for this challenge. The key of each container
       is its name, where the container can be found via DNS lookup at runtime
       from other containers within this challenge.
+      anyOf:
+      # Either 'image' or 'build' must be specified
+      - required:
+        - image
+      - required:
+        - build
     additionalProperties:
       type: object
       properties:
@@ -234,6 +240,49 @@ properties:
             256Mi.
           items:
             type: string
+        healthcheck:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: true
+              description: >-
+                Whether or not the healthcheck should be enabled
+            image:
+              type: string
+              description: >-
+                The image tag for this container. If 'build' is not specified, the
+                container will be pulled (e.g. containers for services like a
+                database found on dockerhub). If 'build' is specified, this
+                overrides the 'name' (default the name of the directory specified in
+                'build') in the image tag template defined globally in the project.
+            build:
+              oneOf:
+              - type: string
+                description: >-
+                  Path to the directory containing a Dockerfile to build for this container.
+              - type: object
+                description: >-
+                  Complex build configuration object roughly mirroring that of
+                  docker-compose.yml.
+                properties:
+                  context:
+                    type: string
+                    description: >-
+                      Path to the build context
+                  dockerfile:
+                    type: string
+                    description: >-
+                      Path to the Dockerfile within the build context
+                  args:
+                    type: object
+                    description: >-
+                      Build arguments to be passed to the build. Please write
+                      numbers as strings to avoid ambiguity from number formatting
+                    additionalProperties:
+                      type: string
+                required:
+                - context
       anyOf:
       # Either 'image' or 'build' must be specified
       - required:

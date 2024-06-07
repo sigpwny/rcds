@@ -51,6 +51,7 @@ spec:
               mountPath: {{ tmpfsMount }}
             {% endfor %}
           {% endif %}
+          {% if container.healthcheck.enabled %}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -65,20 +66,19 @@ spec:
             initialDelaySeconds: 5
             timeoutSeconds: 3
             periodSeconds: 5
-        {% if container.healthcheck %}
         - name: healthcheck
-          image: gcr.io/kctf-docker/healthcheck
+          image: {{ container.healthcheck.config.image }}
           resources:
             limits:
               cpu: 1000m
             requests:
               cpu: 50m
-          volumeMounts:
-            - name: pow-bypass
-              mountPath: /pow-bypass
-              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: false
         {% endif %}
-      {% if container.config.tmpfsMounts | first is defined | container.healthcheck %}
+      {% if container.config.tmpfsMounts | first is defined %}
       volumes:
         {% for tmpfsMount in container.config.tmpfsMounts %}
         - name: {{ tmpfsMount }}
@@ -86,11 +86,6 @@ spec:
             medium: Memory
             sizeLimit: 256Mi
         {% endfor %}
-        {% if container.healthcheck %}
-        - name: pow-bypass
-          secret:
-            secretName: pow-bypass
-        {% endif %}
       {% endif %}
       automountServiceAccountToken: false
       enableServiceLinks: false
