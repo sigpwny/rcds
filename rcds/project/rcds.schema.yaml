@@ -26,7 +26,7 @@ properties:
             type: string
             description: >-
               Template for the name of the docker image.
-            default: "rcds-{{ challenge.id }}-{{ container.name }}"
+            default: "rcds-{{ challenge.id }}-{{ containername }}-{{ subcontainer.name }}"
         required:
         - prefix
         - template

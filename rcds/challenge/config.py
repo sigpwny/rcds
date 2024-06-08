@@ -155,7 +155,7 @@ class ConfigLoader:
                             for expose_obj in expose_objs:
                                 if (
                                     expose_obj["target"]
-                                    not in config["containers"][key]["ports"]
+                                    not in config["containers"][key]["challenge"]["ports"]
                                 ):
                                     yield TargetNotFoundError(
                                         f"`expose` references port "

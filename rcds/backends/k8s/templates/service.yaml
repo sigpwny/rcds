@@ -1,5 +1,5 @@
 {% import '_helpers.jinja' as helpers with context %}
-{% if container.config.ports %}
+{% if container.config.challenge.ports %}
 apiVersion: v1
 kind: Service
 metadata:
@@ -18,7 +18,7 @@ spec:
     {{ helpers.common_labels() | indent(4) }}
     {{ helpers.container_labels() | indent(4) }}
   ports:
-  {% for port in container.config.ports %}
+  {% for port in container.config.challenge.ports %}
     - port: {{ port }}
       targetPort: {{ port }}
       name: port-{{ port }}

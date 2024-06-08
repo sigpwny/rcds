@@ -1,4 +1,5 @@
 {% import '_helpers.jinja' as helpers with context %}
+{% set has_healthcheck = container.config.healthcheck is defined and container.config.healthcheck.enabled %}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,38 +21,38 @@ spec:
         {{ helpers.container_labels() | indent(8) }}
     spec:
       containers:
-        - name: container
-          image: {{ container.config.image }}
-          {% if container.config.ports %}
+        - name: challenge
+          image: {{ container.config.challenge.image }}
+          {% if container.config.challenge.ports %}
           ports:
-          {% for port in container.config.ports %}
+          {% for port in container.config.challenge.ports %}
             - containerPort: {{ port }}
               name: port-{{ port }}
           {% endfor %}
           {% endif %}
-          {% if container.config.environment %}
+          {% if container.config.challenge.environment %}
           env:
-          {% for name, value in container.config.environment.items() %}
+          {% for name, value in container.config.challenge.environment.items() %}
             - name: {{ name }}
               value: {{ value | quote }}
           {% endfor %}
           {% endif %}
-          {% if container.config.resources %}
+          {% if container.config.challenge.resources %}
           resources:
-            {{ container.config.resources | yaml(12) }}
+            {{ container.config.challenge.resources | yaml(12) }}
           {% endif %}
           securityContext:
             allowPrivilegeEscalation: false
             privileged: false
-            readOnlyRootFilesystem: {{ container.config.readOnlyRootFilesystem }}
-          {% if container.config.tmpfsMounts | first is defined %}
+            readOnlyRootFilesystem: {{ container.config.challenge.readOnlyRootFilesystem }}
+          {% if container.config.challenge.tmpfsMounts | first is defined %}
           volumeMounts:
-            {% for tmpfsMount in container.config.tmpfsMounts %}
+            {% for tmpfsMount in container.config.challenge.tmpfsMounts %}
             - name: {{ tmpfsMount }}
               mountPath: {{ tmpfsMount }}
             {% endfor %}
           {% endif %}
-          {% if container.healthcheck.enabled %}
+          {% if has_healthcheck %}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -66,8 +67,10 @@ spec:
             initialDelaySeconds: 5
             timeoutSeconds: 3
             periodSeconds: 5
+          {% endif %}
+        {% if has_healthcheck %}
         - name: healthcheck
-          image: {{ container.healthcheck.config.image }}
+          image: {{ container.config.healthcheck.image }}
           resources:
             limits:
               cpu: 1000m
@@ -78,9 +81,9 @@ spec:
             privileged: false
             readOnlyRootFilesystem: false
         {% endif %}
-      {% if container.config.tmpfsMounts | first is defined %}
+      {% if container.config.challenge.tmpfsMounts | first is defined %}
       volumes:
-        {% for tmpfsMount in container.config.tmpfsMounts %}
+        {% for tmpfsMount in container.config.challenge.tmpfsMounts %}
         - name: {{ tmpfsMount }}
           emptyDir:
             medium: Memory
