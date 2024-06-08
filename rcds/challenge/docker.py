@@ -69,9 +69,12 @@ def generate_sum(root: Path) -> str:
     :param pathlib.Path root: Path to the containing directory of the Dockerfile to
         analyze
     """
+    from stat import ST_MODE
+
     h = hashlib.sha256()
     for f in sorted(get_context_files(root), key=lambda f: str(f.relative_to(root))):
         h.update(bytes(f.relative_to(root)))
+        h.update(bytes(oct(f.stat()[ST_MODE]), 'ascii'))
         with f.open("rb") as fd:
             for chunk in iter(lambda: fd.read(524288), b""):
                 h.update(chunk)
