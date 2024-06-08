@@ -13,6 +13,31 @@ if TYPE_CHECKING:
     from .challenge import Challenge
 
 
+def monkey_patch():
+    from docker.models.images import ImageCollection
+
+    func = ImageCollection.build
+    hookname = 'uiuctf_rctf_patched_json_stream'
+    oldnames = func.__code__.co_names
+    if 'json_stream' in oldnames:
+        new_names = tuple(name if name != 'json_stream' else hookname
+                          for name in oldnames)
+        func.__code__ = func.__code__.replace(co_names=new_names)
+
+        hooked = func.__globals__['json_stream']
+
+        def hook(*args, **kwargs):
+            for chunk in hooked(*args, **kwargs):
+                if 'stream' in chunk:
+                    print(chunk['stream'], end='')
+                yield chunk
+
+        func.__globals__[hookname] = hook
+
+
+monkey_patch()
+
+
 def flatten(i: Iterable[Union[str, Iterable[str]]]) -> Iterable[str]:
     for x in i:
         if isinstance(x, collections.abc.Iterable) and not isinstance(x, str):
