@@ -44,7 +44,7 @@ def get_api_method_for_kind(api_client: Any, method: str, kind: str) -> Callable
             "create": lambda namespace, body, **kwargs:
                 api_client.create_namespaced_custom_object(
                     group, version, namespace, plural, body, **kwargs),
-            "delete": lambda name, namespace, body, **kwargs:
+            "delete": lambda name, namespace, **kwargs:
                 api_client.delete_namespaced_custom_object(
                     group, version, namespace, plural, name, **kwargs),
             "list": lambda namespace, **kwargs:
