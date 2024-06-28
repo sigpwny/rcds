@@ -83,18 +83,6 @@ class ContainerBackend(rcds.backend.BackendContainerRuntime):
                 container_name, None
             )
 
-            if expose_config is not None:
-                for expose_port in expose_config:
-                    if "http" in expose_port:
-                        if isinstance(expose_port["http"], str):
-                            expose_port["http"] += "." + self._options["domain"]
-                        else:
-                            assert isinstance(expose_port["http"], dict)
-                            if "raw" in expose_port["http"]:
-                                expose_port["http"] = expose_port["http"]["raw"]
-                    if "tcp" in expose_port:
-                        expose_port["host"] = self._options["domain"]
-
             container_env: Environment = challenge_env.overlay()
             container_env.globals["container"] = {
                 "name": container_name,
