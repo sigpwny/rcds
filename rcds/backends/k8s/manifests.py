@@ -64,7 +64,7 @@ def labels_to_label_selector(labels: Dict[str, str]) -> str:
     return selector[:-1]
 
 
-def sync_manifests(all_manifests: Iterable[Dict[str, Any]]):
+def sync_manifests(all_manifests: Iterable[Dict[str, Any]], delete: bool):
     v1 = client.CoreV1Api()
     appsv1 = client.AppsV1Api()
     networkingv1 = client.NetworkingV1Api()
@@ -165,5 +165,8 @@ def sync_manifests(all_manifests: Iterable[Dict[str, Any]]):
                 )(manifest_name, namespace)
 
     for namespace_name in server_namespaces_names:
-        print(f"DELETE Namespace {namespace_name}")
-        v1.delete_namespace(namespace_name)
+        if delete:
+            print(f"DELETE Namespace {namespace_name}")
+            v1.delete_namespace(namespace_name)
+        else:
+            print(f"SKIP DELETE Namespace {namespace_name}")

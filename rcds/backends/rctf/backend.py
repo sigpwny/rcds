@@ -64,7 +64,7 @@ class ScoreboardBackend(rcds.backend.BackendScoreboard):
 
         schema["required"] += ["author", "category", "tiebreakEligible", "sortWeight"]
 
-    def commit(self) -> bool:
+    def commit(self, delete: bool) -> bool:
         # Validate challenges
         for challenge in self._project.challenges.values():
             self.validate_challenge(challenge)
@@ -87,8 +87,11 @@ class ScoreboardBackend(rcds.backend.BackendScoreboard):
                 pass
             self.commit_challenge(challenge)
         for chall_id in remote_challenges:
-            print(f"Deleting {chall_id}")
-            self._adminv1.delete_challenge(chall_id)
+            if delete:
+                print(f"Deleting {chall_id}")
+                self._adminv1.delete_challenge(chall_id)
+            else:
+                print(f"Skip Deleting {chall_id}")
         return True
 
     def validate_challenge(self, challenge: rcds.Challenge) -> None:

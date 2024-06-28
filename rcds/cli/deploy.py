@@ -8,7 +8,8 @@ from rcds.util import SUPPORTED_EXTENSIONS, find_files
 
 
 @click.command()
-def deploy() -> None:
+@click.option('--delete/--no-delete', default=False)
+def deploy(delete: bool) -> None:
     try:
         project_config = find_files(["rcds"], SUPPORTED_EXTENSIONS, recurse=True)[
             "rcds"
@@ -35,11 +36,11 @@ def deploy() -> None:
         challenge.create_transaction().commit()
     if project.container_backend is not None:
         click.echo("Commiting container backend")
-        project.container_backend.commit()
+        project.container_backend.commit(delete)
     else:
         click.echo("WARN: no container backend, skipping...")
     if project.scoreboard_backend is not None:
         click.echo("Commiting scoreboard backend")
-        project.scoreboard_backend.commit()
+        project.scoreboard_backend.commit(delete)
     else:
         click.echo("WARN: no scoreboard backend, skipping...")
