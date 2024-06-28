@@ -121,6 +121,7 @@ class ScoreboardBackend(rcds.backend.BackendScoreboard):
             "flag",
             "tiebreakEligible",
             "sortWeight",
+            "type"
         ]:
             rctf_challenge[common_field] = challenge.config[common_field]
         rctf_challenge["description"] = challenge.render_description()
