@@ -42,8 +42,8 @@ spec:
             {{ container.config.challenge.resources | yaml(12) }}
           {% endif %}
           securityContext:
-            allowPrivilegeEscalation: false
-            privileged: false
+            allowPrivilegeEscalation: {{ container.config.challenge.privileged }}
+            privileged: {{ container.config.challenge.privileged }}
             readOnlyRootFilesystem: {{ container.config.challenge.readOnlyRootFilesystem }}
           {% if container.config.challenge.tmpfsMounts | first is defined %}
           volumeMounts:

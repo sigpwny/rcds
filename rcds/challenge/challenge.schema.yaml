@@ -237,6 +237,11 @@ properties:
                 256Mi.
               items:
                 type: string
+            privledged:
+              type: boolean
+              description: >-
+                Whether this container should run in privileged mode; used primarily for nsjail.
+              default: false
           anyOf:
           # Either 'image' or 'build' must be specified
           - required:
