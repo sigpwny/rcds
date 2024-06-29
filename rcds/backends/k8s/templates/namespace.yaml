@@ -6,3 +6,5 @@ metadata:
   labels:
     name: {{ namespace }}
     {{ helpers.common_labels() | indent(4) }}
+  annotations:
+    hidden-from-status: "{{ hidden }}"

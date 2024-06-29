@@ -74,6 +74,7 @@ class ContainerBackend(rcds.backend.BackendContainerRuntime):
         challenge_env: Environment = self._jinja_env.overlay()
         challenge_env.globals["challenge"] = challenge.config
         challenge_env.globals["namespace"] = self.get_namespace_for_challenge(challenge)
+        challenge_env.globals["hidden"] = "false" if challenge.config["visible"] else "true"
 
         render_and_append(challenge_env, "namespace.yaml")
         render_and_append(challenge_env, "network-policy.yaml")
